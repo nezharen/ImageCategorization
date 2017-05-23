@@ -12,10 +12,9 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
         image_content = tf.read_file(os.path.join(directory, image_id + '.jpg'))
         image = tf.image.decode_jpeg(image_content)
         resized_image = tf.cast(tf.image.resize_images(image, [250, 250]), tf.uint8)
-        image_bytes = sess.run(tf.reshape(resize_images, [-1])).tobytes()
-        print image_bytes
+        image_bytes = sess.run(resized_image).tobytes()
         example = tf.train.Example(features = tf.train.Features(feature = {
-            'label': tf.train.Feature(bytes_list = tf.train.BytesList(value = [image_label])),
+            'label': tf.train.Feature(int64_list = tf.train.Int64List(value = [int(image_label)])),
             'image': tf.train.Feature(bytes_list = tf.train.BytesList(value = [image_bytes]))
         }))
         writer = tf.python_io.TFRecordWriter(os.path.join(directory, image_id + '.tfrecord'))
@@ -23,24 +22,10 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
         writer.close()
         print image_id + '.tfrecord'
         image_filenames.append(os.path.join(directory, image_id + '.tfrecord'))
-        image_labels.append(int(image_label))
-    return image_filenames, image_labels
-
-def read_images_from_disk(input_queue):
-    label = input_queue[1]
-    file_contents = tf.read_file(input_queue[0])
-    example = tf.image.decode_jpeg(file_contents)
-    return example, label
+    return image_filenames
 
 sess = tf.Session()
-coord = tf.train.Coordinator()
-threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 
-image_list, label_list = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
+image_list = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
 images = tf.convert_to_tensor(image_list, dtype = tf.string)
-labels = tf.convert_to_tensor(label_list, dtype = tf.int32)
-input_queue = tf.train.slice_input_producer([images, labels])
-#image, label = read_images_from_disk(input_queue)
 
-coord.request_stop()
-coord.join(threads)

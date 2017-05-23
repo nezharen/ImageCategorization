@@ -46,8 +46,8 @@ features = tf.parse_single_example(
         'label': tf.FixedLenFeature([], tf.int64),
     })
 image_raw = tf.decode_raw(features['image'], tf.uint8)
-image = tf.image.rgb_to_grayscale(tf.reshape(image_raw, [250, 250, 3]))
-image = tf.cast(image, tf.float32) * (1. / 255)
+image = tf.reshape(image_raw, [250, 250, 3])
+image = tf.cast(image, tf.float32) / 255
 label = tf.cast(features['label'], tf.int32)
 min_after_dequeue = 500
 batch_size = 3
@@ -65,10 +65,13 @@ conv2d_layer_one = tf.contrib.layers.convolution2d(
 
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
-sess.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
-saver.save(sess, 'train.ckpt')
-print sess.run(conv2d_layer_one)
+if ckpt and ckpt.model_checkpoint_path:
+    saver.restore(sess, ckpt.model_checkpoint_path)
+    print('restored from ' + ckpt.model_checkpoint_path)
+else:
+    sess.run(tf.global_variables_initializer())
+    saver.save(sess, 'train.ckpt')
 
 coord.request_stop()
 coord.join(threads)

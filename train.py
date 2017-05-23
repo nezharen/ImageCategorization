@@ -37,8 +37,8 @@ saver = tf.train.Saver()
 #restore from checkpoint or init variables
 ckpt = tf.train.get_checkpoint_state(os.path.dirname(__file__))
 if ckpt and ckpt.model_checkpoint_path:
-    saver.restore(sess, chkp.model_checkpoint_path)
-    print('restored from %s' % chkp.model_checkpoint_path)
+    saver.restore(sess, ckpt.model_checkpoint_path)
+    print('restored from %s' % ckpt.model_checkpoint_path)
 else:
     init_variables = tf.global_variables_initializer()
     sess.run(init_variables)

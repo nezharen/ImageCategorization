@@ -44,8 +44,24 @@ else:
     init_variables = tf.global_variables_initializer()
     sess.run(init_variables)
 
-image_list = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
+images_filename = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
+filename_queue = tf.train.string_input_producer(images_filename)
 
-images = tf.convert_to_tensor(image_list, dtype = tf.string)
+coord = tf.train.Coordinator()
+threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 
+reader = tf.TFRecordReader()
+_, serialized_example = reader.read(filename_queue)
+features = tf.parse_single_example(
+    serialized_example,
+    features = {
+        'image': tf.FixedLenFeature([], tf.string),
+        'label': tf.FixedLenFeature([], tf.int64),
+    })
+image_raw = tf.decode_raw(features['image'], tf.uint8)
+image = tf.reshape(image_raw, [250, 250, 3])
+label = tf.cast(features['label'], tf.int32)
+
+coord.request_stop()
+coord.join(threads)
 sess.close()

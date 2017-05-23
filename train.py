@@ -25,8 +25,9 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
             writer.close()
             print('generated ' + image_id + '.tfrecord')
         image_filenames.append(os.path.join(directory, image_id + '.tfrecord'))
-    sess.run(converted_to_tfrecord.assign(True))
-    saver.save(sess, 'train.ckpt')
+    if not sess.run(converted_to_tfrecord):
+        sess.run(converted_to_tfrecord.assign(True))
+        saver.save(sess, 'train.ckpt')
     return image_filenames
 
 sess = tf.Session()

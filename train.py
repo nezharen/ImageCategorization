@@ -88,21 +88,41 @@ flattened_layer_two = tf.reshape(
 hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = flattened_layer_two,
     num_outputs = 512)
+hidden_layer_three = tf.contrib.layers.dropout(
+    inputs = hidden_layer_three)
+final_layer = tf.contrib.layers.fully_connected(
+    inputs = hidden_layer_three,
+    num_outputs = 12)
+onehot_labels = tf.one_hot(indices = label_batch, depth = 12)
+loss = tf.losses.softmax_cross_entropy(
+    onehot_labels = onehot_labels,
+    logits = final_layer)
+train_op = tf.contrib.layers.optimize_loss(
+    loss = loss,
+    global_step = tf.contrib.framework.get_global_step(),
+    learning_rate = 0.001,
+    optimizer = 'SGD')
 
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()
-sess.run(tf.global_variables_initializer())
-saver.save(sess, 'train.ckpt')
-'''
+
+#sess.run(tf.global_variables_initializer())
+#saver.save(sess, 'train.ckpt')
 if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
     print('restored from ' + ckpt.model_checkpoint_path)
 else:
     sess.run(tf.global_variables_initializer())
     saver.save(sess, 'train.ckpt')
-'''
-print flattened_layer_two.get_shape()
+
+step = 0
+while True:
+    sess.run(train_op)
+    step = step + 1
+    if step % 100 == 0:
+        saver.save(sess, 'train.ckpt')
+        print('step = %d, loss = %f' % (step, sess.run(loss)))
 
 coord.request_stop()
 coord.join(threads)

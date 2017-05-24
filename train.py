@@ -5,10 +5,10 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
     global sess
     global converted_to_tfrecord
 
-    f = open(os.path.join(directory, filename), 'r')
+    f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
-        image_id, image_label = line[:-2].split(' ')
+        image_id, image_label = line[:-1].split(' ')
         if not converted_to_tfrecord:
             image_content = tf.read_file(os.path.join(directory, image_id + '.jpg'))
             image = tf.image.decode_jpeg(image_content)

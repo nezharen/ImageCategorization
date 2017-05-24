@@ -2,10 +2,10 @@ import os
 import tensorflow as tf
 
 def read_image_list_file(directory, filename):
-    f = open(os.path.join(directory, filename), 'r')
+    f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
-        image_id = line[:-2]
+        image_id = line[:-1]
         image_filenames.append(os.path.join(directory, image_id + '.jpg'))
     return image_filenames
 

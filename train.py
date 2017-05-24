@@ -108,16 +108,14 @@ coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()
 
-sess.run(tf.global_variables_initializer())
-saver.save(sess, 'train.ckpt')
-'''
+#sess.run(tf.global_variables_initializer())
+#saver.save(sess, 'train.ckpt')
 if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
     print('restored from ' + ckpt.model_checkpoint_path)
 else:
     sess.run(tf.global_variables_initializer())
     saver.save(sess, 'train.ckpt')
-'''
 
 step = 0
 while True:

@@ -76,8 +76,7 @@ if ckpt and ckpt.model_checkpoint_path:
     print('restored from ' + ckpt.model_checkpoint_path)
 else:
     print('Error: Can not find checkpoint. Please run train.py first.')
-print sess.run(final_layer)
-#print sess.run(tf.argmax(input = final_layer, axis = 1))
+print sess.run(tf.argmax(input = final_layer, axis = 1) + 1)
 
 coord.request_stop()
 coord.join(threads)

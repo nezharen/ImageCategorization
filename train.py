@@ -55,23 +55,54 @@ capacity = min_after_dequeue + 3 * batch_size
 image_batch, label_batch = tf.train.shuffle_batch(
     [image, label], batch_size = batch_size, capacity = capacity,
     min_after_dequeue = min_after_dequeue)
-conv2d_layer_one = tf.contrib.layers.convolution2d(
-    image_batch,
+conv2d_layer_one = tf.contrib.layers.conv2d(
+    inputs = image_batch,
     num_outputs = 32,
     kernel_size = (5, 5),
-    activation_fn = tf.nn.relu,
     stride = (2, 2),
+    padding = 'SAME',
     trainable = True)
+pool_layer_one = tf.contrib.layers.max_pool2d(
+    inputs = conv2d_layer_one,
+    kernel_size = [2, 2],
+    stride = [2, 2],
+    padding = 'SAME')
+conv2d_layer_two = tf.contrib.layers.conv2d(
+    inputs = pool_layer_one,
+    num_outputs = 64,
+    kernel_size = (5, 5),
+    stride = (1, 1),
+    padding = 'SAME',
+    trainable = True)
+pool_layer_two = tf.contrib.layers.max_pool2d(
+    inputs = conv2d_layer_two,
+    kernel_size = [2, 2],
+    stride = [2, 2],
+    padding = 'SAME')
+flattened_layer_two = tf.reshape(
+    pool_layer_two,
+    [
+        batch_size,
+        -1
+    ])
+hidden_layer_three = tf.contrib.layers.fully_connected(
+    inputs = flattened_layer_two,
+    num_outputs = 512)
 
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()
+sess.run(tf.global_variables_initializer())
+saver.save(sess, 'train.ckpt')
+'''
 if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
     print('restored from ' + ckpt.model_checkpoint_path)
 else:
     sess.run(tf.global_variables_initializer())
     saver.save(sess, 'train.ckpt')
+'''
+print flattened_layer_two.get_shape()
 
 coord.request_stop()
 coord.join(threads)

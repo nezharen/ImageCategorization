@@ -7,7 +7,6 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
 
     f = open(os.path.join(directory, filename), 'r')
     image_filenames = []
-    image_labels = []
     for line in f:
         image_id, image_label = line[:-2].split(' ')
         if not converted_to_tfrecord:
@@ -16,7 +15,7 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
             resized_image = tf.cast(tf.image.resize_images(image, [250, 250]), tf.uint8)
             image_bytes = sess.run(resized_image).tobytes()
             example = tf.train.Example(features = tf.train.Features(feature = {
-                'label': tf.train.Feature(int64_list = tf.train.Int64List(value = [int(image_label)])),
+                'label': tf.train.Feature(int64_list = tf.train.Int64List(value = [int(image_label) - 1])),
                 'image': tf.train.Feature(bytes_list = tf.train.BytesList(value = [image_bytes]))
             }))
             writer = tf.python_io.TFRecordWriter(os.path.join(directory, image_id + '.tfrecord'))
@@ -87,12 +86,14 @@ flattened_layer_two = tf.reshape(
     ])
 hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = flattened_layer_two,
-    num_outputs = 512)
+    num_outputs = 512,
+    trainable = True)
 hidden_layer_three = tf.contrib.layers.dropout(
     inputs = hidden_layer_three)
 final_layer = tf.contrib.layers.fully_connected(
     inputs = hidden_layer_three,
-    num_outputs = 12)
+    num_outputs = 12,
+    trainable = True)
 onehot_labels = tf.one_hot(indices = label_batch, depth = 12)
 loss = tf.losses.softmax_cross_entropy(
     onehot_labels = onehot_labels,
@@ -107,14 +108,16 @@ coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()
 
-#sess.run(tf.global_variables_initializer())
-#saver.save(sess, 'train.ckpt')
+sess.run(tf.global_variables_initializer())
+saver.save(sess, 'train.ckpt')
+'''
 if ckpt and ckpt.model_checkpoint_path:
     saver.restore(sess, ckpt.model_checkpoint_path)
     print('restored from ' + ckpt.model_checkpoint_path)
 else:
     sess.run(tf.global_variables_initializer())
     saver.save(sess, 'train.ckpt')
+'''
 
 step = 0
 while True:

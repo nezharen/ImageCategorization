@@ -26,5 +26,5 @@ infer_file.close
 print('records number in extra.label: %d' % real_num)
 print('records number in result.list: %d' % infer_num)
 print('accurate rate: %f' % (right_num * 1. / infer_num))
-for i in range(1, 12):
+for i in range(1, 13):
     print('accurate rate for label %d: %f' % (i, labels_right_num['%d' % i] * 1. / labels_sum['%d' % i]))

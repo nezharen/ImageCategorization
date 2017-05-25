@@ -23,6 +23,7 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
             writer.close()
             print('generated ' + image_id + '.tfrecord')
         image_filenames.append(os.path.join(directory, image_id + '.tfrecord'))
+    f.close()
     return image_filenames
 
 

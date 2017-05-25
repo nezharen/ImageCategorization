@@ -8,7 +8,7 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
     f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
-        image_id, image_label = line[:-1].split(' ')
+        image_id, image_label = line.rstrip('\n').split(' ')
         if not converted_to_tfrecord:
             image_content = tf.read_file(os.path.join(directory, image_id + '.jpg'))
             image = tf.image.decode_jpeg(image_content)
@@ -36,7 +36,10 @@ if ckpt and ckpt.model_checkpoint_path:
 
 #convert image to tfrecord and read
 images_filename = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
-filename_queue = tf.train.string_input_producer(images_filename)
+filename_queue = tf.train.string_input_producer(
+    images_filename,
+    shuffle = False
+    )
 reader = tf.TFRecordReader()
 _, serialized_example = reader.read(filename_queue)
 features = tf.parse_single_example(
@@ -87,7 +90,7 @@ flattened_layer_two = tf.reshape(
     ])
 hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = flattened_layer_two,
-    num_outputs = 512,
+    num_outputs = 886,
     trainable = True)
 hidden_layer_three = tf.contrib.layers.dropout(
     inputs = hidden_layer_three)

@@ -5,7 +5,7 @@ def read_image_list_file(directory, filename):
     f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
-        image_id = line[:-1]
+        image_id = line.rstrip('\n')
         image_filenames.append(os.path.join(directory, image_id + '.jpg'))
     f.close()
     return image_filenames
@@ -60,7 +60,7 @@ flattened_layer_two = tf.reshape(
     ])
 hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = flattened_layer_two,
-    num_outputs = 512,
+    num_outputs = 886,
     trainable = False)
 hidden_layer_three = tf.contrib.layers.dropout(
     inputs = hidden_layer_three)

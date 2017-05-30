@@ -1,3 +1,4 @@
 ic-data/*
 checkpoint*
 train.ckpt.*
+result.list

@@ -30,52 +30,96 @@ image_batch, filename_batch = tf.train.batch(
     capacity = capacity)
 conv2d_layer_one = tf.contrib.layers.conv2d(
     inputs = image_batch,
-    num_outputs = 96,
-    kernel_size = (11, 11),
-    stride = (4, 4),
+    num_outputs = 64,
+    kernel_size = (7, 7),
+    stride = (2, 2),
     padding = 'SAME',
     trainable = False)
 pool_layer_one = tf.contrib.layers.max_pool2d(
     inputs = conv2d_layer_one,
-    kernel_size = [3, 3],
+    kernel_size = [2, 2],
     stride = [2, 2],
     padding = 'SAME')
-conv2d_layer_two = tf.contrib.layers.conv2d(
-    inputs = pool_layer_one,
-    num_outputs = 256,
-    kernel_size = (5, 5),
-    stride = (1, 1),
-    padding = 'SAME',
-    trainable = False)
-pool_layer_two = tf.contrib.layers.max_pool2d(
-    inputs = conv2d_layer_two,
-    kernel_size = [3, 3],
-    stride = [2, 2],
-    padding = 'SAME')
-conv2d_layer_three = tf.contrib.layers.conv2d(
-    inputs = pool_layer_two,
-    num_outputs = 384,
-    kernel_size = (3, 3),
-    stride = (1, 1),
-    padding = 'SAME',
-    trainable = False)
-conv2d_layer_four = tf.contrib.layers.conv2d(
-    inputs = conv2d_layer_three,
-    num_outputs = 384,
-    kernel_size = (3, 3),
-    stride = (1, 1),
-    padding = 'SAME',
-    trainable = False)
-conv2d_layer_five = tf.contrib.layers.conv2d(
-    inputs = conv2d_layer_four,
-    num_outputs = 256,
-    kernel_size = (3, 3),
-    stride = (1, 1),
-    padding = 'SAME',
-    trainable = False)
-pool_layer_five = tf.contrib.layers.max_pool2d(
-    inputs = conv2d_layer_five,
-    kernel_size = [3, 3],
+conv2d_layers = range(32)
+for i in range(0, 6):
+    if i == 0:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = pool_layer_one,
+            num_outputs = 64,
+            kernel_size = (3, 3),
+            stride = (1, 1),
+            padding = 'SAME',
+            trainable = False)
+    else:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 64,
+            kernel_size = (3, 3),
+            stride = (1, 1),
+            padding = 'SAME',
+            trainable = False)
+    if i % 2 == 1:
+        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
+for i in range(6, 14):
+    if i == 6:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 128,
+            kernel_size = (3, 3),
+            stride = (2, 2),
+            padding = 'SAME',
+            trainable = False)
+    else:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 128,
+            kernel_size = (3, 3),
+            stride = (1, 1),
+            padding = 'SAME',
+            trainable = False)
+    if i > 7 and i % 2 == 1:
+        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
+for i in range(14, 26):
+    if i == 14:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 256,
+            kernel_size = (3, 3),
+            stride = (2, 2),
+            padding = 'SAME',
+            trainable = False)
+    else:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 256,
+            kernel_size = (3, 3),
+            stride = (1, 1),
+            padding = 'SAME',
+            trainable = False)
+    if i > 15 and i % 2 == 1:
+        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
+for i in range(26, 32):
+    if i == 26:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 512,
+            kernel_size = (3, 3),
+            stride = (2, 2),
+            padding = 'SAME',
+            trainable = False)
+    else:
+        conv2d_layers[i] = tf.contrib.layers.conv2d(
+            inputs = conv2d_layers[i - 1],
+            num_outputs = 512,
+            kernel_size = (3, 3),
+            stride = (1, 1),
+            padding = 'SAME',
+            trainable = False)
+    if i > 27 and i % 2 == 1:
+        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
+pool_layer_five = tf.contrib.layers.avg_pool2d(
+    inputs = conv2d_layers[31],
+    kernel_size = [2, 2],
     stride = [2, 2],
     padding = 'SAME')
 flattened_layer_two = tf.reshape(
@@ -84,20 +128,8 @@ flattened_layer_two = tf.reshape(
         batch_size,
         -1
     ])
-hidden_layer_three = tf.contrib.layers.fully_connected(
-    inputs = flattened_layer_two,
-    num_outputs = 4096,
-    trainable = False)
-hidden_layer_three = tf.contrib.layers.dropout(
-    inputs = hidden_layer_three)
-hidden_layer_four = tf.contrib.layers.fully_connected(
-    inputs = hidden_layer_three,
-    num_outputs = 4096,
-    trainable = False)
-hidden_layer_four = tf.contrib.layers.dropout(
-    inputs = hidden_layer_four)
 final_layer = tf.contrib.layers.fully_connected(
-    inputs = hidden_layer_four,
+    inputs = flattened_layer_two,
     num_outputs = 12,
     trainable = False)
 

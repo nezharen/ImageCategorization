@@ -1,138 +1,66 @@
 import os
+import numpy as np
 import tensorflow as tf
+from keras.preprocessing import image as kerasimage
+from keras.applications.resnet50 import ResNet50, preprocess_input, decode_predictions
 
 def read_image_list_file(directory, filename):
+    model = ResNet50(weights='imagenet')
+
     f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
         image_id = line.rstrip('\n')
-        image_filenames.append(os.path.join(directory, image_id + '.jpg'))
+        resized_image = kerasimage.load_img(os.path.join(directory, image_id + '.jpg'), target_size=(224, 224))
+        resized_image = kerasimage.img_to_array(resized_image)
+        resized_image = np.expand_dims(resized_image, axis=0)
+        resized_image = preprocess_input(resized_image)
+        preds = model.predict(resized_image)
+        image_bytes = np.reshape(preds, [1000])
+        example = tf.train.Example(features = tf.train.Features(feature = {
+            'image': tf.train.Feature(float_list = tf.train.FloatList(value = image_bytes))
+        }))
+        writer = tf.python_io.TFRecordWriter(os.path.join(directory, image_id + '.tfrecord'))
+        writer.write(example.SerializeToString())
+        writer.close()
+        print('generated ' + image_id + '.tfrecord')
+        image_filenames.append(os.path.join(directory, image_id + '.tfrecord'))
     f.close()
     return image_filenames
 
 
-sess = tf.Session()
 images_filename = read_image_list_file(os.path.join('ic-data', 'check'), 'check.doc.list')
+tf.reset_default_graph()
+
 filename_queue = tf.train.string_input_producer(
     images_filename,
     shuffle = False)
-reader = tf.WholeFileReader()
-key, image_raw = reader.read(filename_queue)
-image = tf.image.decode_jpeg(image_raw)
-image = tf.image.resize_images(image, [250, 250])
-image = tf.reshape(image, [250, 250, 3])
-image = tf.cast(image, tf.float32) / 255
+reader = tf.TFRecordReader()
+key, serialized_example = reader.read(filename_queue)
+features = tf.parse_single_example(
+    serialized_example,
+    features = {
+        'image': tf.FixedLenFeature([1000], tf.float32),
+    })
+image = tf.reshape(features['image'], [1000])
 min_after_dequeue = 500
 batch_size = 3
 capacity = min_after_dequeue + 3 * batch_size
 image_batch, filename_batch = tf.train.batch(
     [image, key], batch_size = batch_size,
     capacity = capacity)
-conv2d_layer_one = tf.contrib.layers.conv2d(
+
+hidden_layer_four = tf.contrib.layers.fully_connected(
     inputs = image_batch,
-    num_outputs = 64,
-    kernel_size = (7, 7),
-    stride = (2, 2),
-    padding = 'SAME',
+    num_outputs = 4096,
     trainable = False)
-pool_layer_one = tf.contrib.layers.max_pool2d(
-    inputs = conv2d_layer_one,
-    kernel_size = [2, 2],
-    stride = [2, 2],
-    padding = 'SAME')
-conv2d_layers = range(32)
-for i in range(0, 6):
-    if i == 0:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = pool_layer_one,
-            num_outputs = 64,
-            kernel_size = (3, 3),
-            stride = (1, 1),
-            padding = 'SAME',
-            trainable = False)
-    else:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 64,
-            kernel_size = (3, 3),
-            stride = (1, 1),
-            padding = 'SAME',
-            trainable = False)
-    if i % 2 == 1:
-        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
-for i in range(6, 14):
-    if i == 6:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 128,
-            kernel_size = (3, 3),
-            stride = (2, 2),
-            padding = 'SAME',
-            trainable = False)
-    else:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 128,
-            kernel_size = (3, 3),
-            stride = (1, 1),
-            padding = 'SAME',
-            trainable = False)
-    if i > 7 and i % 2 == 1:
-        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
-for i in range(14, 26):
-    if i == 14:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 256,
-            kernel_size = (3, 3),
-            stride = (2, 2),
-            padding = 'SAME',
-            trainable = False)
-    else:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 256,
-            kernel_size = (3, 3),
-            stride = (1, 1),
-            padding = 'SAME',
-            trainable = False)
-    if i > 15 and i % 2 == 1:
-        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
-for i in range(26, 32):
-    if i == 26:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 512,
-            kernel_size = (3, 3),
-            stride = (2, 2),
-            padding = 'SAME',
-            trainable = False)
-    else:
-        conv2d_layers[i] = tf.contrib.layers.conv2d(
-            inputs = conv2d_layers[i - 1],
-            num_outputs = 512,
-            kernel_size = (3, 3),
-            stride = (1, 1),
-            padding = 'SAME',
-            trainable = False)
-    if i > 27 and i % 2 == 1:
-        conv2d_layers[i] = conv2d_layers[i] + conv2d_layers[i - 1]
-pool_layer_five = tf.contrib.layers.avg_pool2d(
-    inputs = conv2d_layers[31],
-    kernel_size = [2, 2],
-    stride = [2, 2],
-    padding = 'SAME')
-flattened_layer_two = tf.reshape(
-    pool_layer_five,
-    [
-        batch_size,
-        -1
-    ])
 final_layer = tf.contrib.layers.fully_connected(
-    inputs = flattened_layer_two,
+    inputs = hidden_layer_four,
     num_outputs = 12,
     trainable = False)
 
+
+sess = tf.Session()
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()

@@ -5,7 +5,6 @@ from keras.preprocessing import image as kerasimage
 from keras.applications.resnet50 import ResNet50, preprocess_input, decode_predictions
 
 def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename):
-    global sess
     global converted_to_tfrecord
     global model
 
@@ -34,7 +33,6 @@ def read_image_label_list_file_and_convert_image_to_tfrecord(directory, filename
 
 
 #restore from checkpoint or init variables
-sess = tf.Session()
 converted_to_tfrecord = False
 ckpt = tf.train.get_checkpoint_state(os.path.dirname(__file__))
 if ckpt and ckpt.model_checkpoint_path:
@@ -45,6 +43,8 @@ else:
 
 #convert image to tfrecord and read
 images_filename = read_image_label_list_file_and_convert_image_to_tfrecord(os.path.join('ic-data', 'train'), 'train.label')
+tf.reset_default_graph()
+
 filename_queue = tf.train.string_input_producer(
     images_filename,
     shuffle = False
@@ -65,6 +65,7 @@ capacity = min_after_dequeue + 3 * batch_size
 image_batch, label_batch = tf.train.shuffle_batch(
     [image, label], batch_size = batch_size, capacity = capacity,
     min_after_dequeue = min_after_dequeue)
+
 hidden_layer_four = tf.contrib.layers.fully_connected(
     inputs = image_batch,
     num_outputs = 4096,
@@ -83,6 +84,7 @@ train_op = tf.contrib.layers.optimize_loss(
     learning_rate = 0.001,
     optimizer = 'SGD')
 
+sess = tf.Session()
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess = sess, coord = coord)
 saver = tf.train.Saver()

@@ -66,8 +66,12 @@ image_batch, label_batch = tf.train.shuffle_batch(
     [image, label], batch_size = batch_size, capacity = capacity,
     min_after_dequeue = min_after_dequeue)
 
-hidden_layer_four = tf.contrib.layers.fully_connected(
+hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = image_batch,
+    num_outputs = 4096,
+    trainable = True)
+hidden_layer_four = tf.contrib.layers.fully_connected(
+    inputs = hidden_layer_three,
     num_outputs = 4096,
     trainable = True)
 final_layer = tf.contrib.layers.fully_connected(
@@ -105,8 +109,6 @@ while True:
     if step % 100 == 0:
         saver.save(sess, 'train.ckpt')
         print('step = %d, loss = %f' % (step, sess.run(loss)))
-    if step > 100000:
-        break
 
 coord.request_stop()
 coord.join(threads)

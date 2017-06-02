@@ -5,29 +5,32 @@ from keras.preprocessing import image as kerasimage
 from keras.applications.resnet50 import ResNet50, preprocess_input, decode_predictions
 
 def read_image_list_file(directory, filename):
-    model = ResNet50(weights='imagenet')
+    global converted_to_tfrecord
 
+    model = ResNet50(weights='imagenet')
     f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:
         image_id = line.rstrip('\n')
-        resized_image = kerasimage.load_img(os.path.join(directory, image_id + '.jpg'), target_size=(224, 224))
-        resized_image = kerasimage.img_to_array(resized_image)
-        resized_image = np.expand_dims(resized_image, axis=0)
-        resized_image = preprocess_input(resized_image)
-        preds = model.predict(resized_image)
-        image_bytes = np.reshape(preds, [1000])
-        example = tf.train.Example(features = tf.train.Features(feature = {
-            'image': tf.train.Feature(float_list = tf.train.FloatList(value = image_bytes))
-        }))
-        writer = tf.python_io.TFRecordWriter(os.path.join(directory, image_id + '.tfrecord'))
-        writer.write(example.SerializeToString())
-        writer.close()
-        print('generated ' + image_id + '.tfrecord')
+        if not converted_to_tfrecord:
+            resized_image = kerasimage.load_img(os.path.join(directory, image_id + '.jpg'), target_size=(224, 224))
+            resized_image = kerasimage.img_to_array(resized_image)
+            resized_image = np.expand_dims(resized_image, axis=0)
+            resized_image = preprocess_input(resized_image)
+            preds = model.predict(resized_image)
+            image_bytes = np.reshape(preds, [1000])
+            example = tf.train.Example(features = tf.train.Features(feature = {
+                'image': tf.train.Feature(float_list = tf.train.FloatList(value = image_bytes))
+            }))
+            writer = tf.python_io.TFRecordWriter(os.path.join(directory, image_id + '.tfrecord'))
+            writer.write(example.SerializeToString())
+            writer.close()
+            print('generated ' + image_id + '.tfrecord')
         image_filenames.append(os.path.join(directory, image_id + '.tfrecord'))
     f.close()
     return image_filenames
 
+converted_to_tfrecord = True
 
 images_filename = read_image_list_file(os.path.join('ic-data', 'check'), 'check.doc.list')
 tf.reset_default_graph()
@@ -50,8 +53,12 @@ image_batch, filename_batch = tf.train.batch(
     [image, key], batch_size = batch_size,
     capacity = capacity)
 
-hidden_layer_four = tf.contrib.layers.fully_connected(
+hidden_layer_three = tf.contrib.layers.fully_connected(
     inputs = image_batch,
+    num_outputs = 4096,
+    trainable = False)
+hidden_layer_four = tf.contrib.layers.fully_connected(
+    inputs = hidden_layer_three,
     num_outputs = 4096,
     trainable = False)
 final_layer = tf.contrib.layers.fully_connected(

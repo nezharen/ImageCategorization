@@ -93,7 +93,7 @@ if ckpt and ckpt.model_checkpoint_path:
                 break
             labeled_filenames[filenames[i]] = labels[i]
             file_id = filenames[i].split(os.sep)[-1].split('.')[0]
-            result_file.write(file_id + (' %d\n' % labels[i]))
+            result_file.write(file_id + ('\t%d\n' % labels[i]))
 else:
     print('Error: Can not find checkpoint. Please run train.py first.')
 

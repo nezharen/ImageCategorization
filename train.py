@@ -87,7 +87,7 @@ loss = tf.losses.softmax_cross_entropy(
 train_op = tf.contrib.layers.optimize_loss(
     loss = loss,
     global_step = tf.contrib.framework.get_global_step(),
-    learning_rate = 0.001,
+    learning_rate = 0.000001,
     optimizer = 'SGD')
 
 sess = tf.Session()

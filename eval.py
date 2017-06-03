@@ -16,7 +16,7 @@ for line in real_file:
 real_file.close()
 
 for line in infer_file:
-    image_id, image_label = line.rstrip('\n').split(' ')
+    image_id, image_label = line.rstrip('\n').split('\t')
     infer_num = infer_num + 1
     if real_labels[image_id] == image_label:
         right_num = right_num + 1

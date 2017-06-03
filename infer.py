@@ -7,7 +7,10 @@ from keras.applications.resnet50 import ResNet50, preprocess_input, decode_predi
 def read_image_list_file(directory, filename):
     global converted_to_tfrecord
 
-    model = ResNet50(weights='imagenet')
+    if not converted_to_tfrecord:
+        model = ResNet50(weights='imagenet')
+    else:
+        model = None
     f = open(os.path.join(directory, filename), 'rU')
     image_filenames = []
     for line in f:

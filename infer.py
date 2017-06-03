@@ -33,7 +33,7 @@ def read_image_list_file(directory, filename):
     f.close()
     return image_filenames
 
-converted_to_tfrecord = True
+converted_to_tfrecord = False
 
 images_filename = read_image_list_file(os.path.join('ic-data', 'check'), 'check.doc.list')
 tf.reset_default_graph()

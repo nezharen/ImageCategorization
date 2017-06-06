@@ -16,6 +16,8 @@ def read_image_list_file(directory, filename):
     for line in f:
         image_id = line.rstrip('\n')
         if not converted_to_tfrecord:
+            if not os.path.isfile(os.path.join(directory, image_id + '.jpg')):
+                continue
             resized_image = kerasimage.load_img(os.path.join(directory, image_id + '.jpg'), target_size=(224, 224))
             resized_image = kerasimage.img_to_array(resized_image)
             resized_image = np.expand_dims(resized_image, axis=0)
